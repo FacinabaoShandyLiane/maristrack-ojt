@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/MT_login/MT_login.html"
+    }
+  ]
+}
