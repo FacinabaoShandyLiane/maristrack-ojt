@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MarisTrack - Authentication</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                colors: {
+                    teal: { 50: '#f0f9f9', 100: '#d9f1f1', 200: '#b8e3e4', 300: '#87ced1', 400: '#53adb2', 500: '#389196', 600: '#2d767b', 700: '#286065', 800: '#254f53', 900: '#224347', 950: '#0f2629' },
+                },
+                fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
+            }
+        }
+    }
+</script>
+<style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0f2629; }
+    .modal-enter { animation: modalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+    @keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+    .fade-in { animation: fadeIn 0.8s ease-out forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex items-center justify-center p-4">
+
+<!-- ROLE SELECTION PAGE -->
+<div id="role-page" class="w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl p-10 modal-enter text-center">
+    <div class="mb-10">
+        <div class="w-16 h-16 bg-teal-100 rounded-3xl flex items-center justify-center text-teal-600 mx-auto mb-4">
+            <i class="fa-solid fa-users text-3xl"></i>
+        </div>
+        <h1 class="text-2xl font-extrabold text-teal-950">
+            Maris<span class="text-teal-500">Track</span>
+        </h1>
+        <p class="text-slate-400 text-xs mt-1">NSTP Management System</p>
+    </div>
+    <div class="space-y-4">
+        <button onclick="openAuth('login')"
+            class="w-full py-4 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl font-bold uppercase tracking-widest text-xs shadow-lg transition-all active:scale-95">
+            Login
+        </button>
+      
+    </div>
+</div>
+
+<!-- AUTHENTICATION PAGE -->
+<div id="auth-page" class="hidden w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl p-10 modal-enter">
+
+    <div class="mb-6">
+        <button onclick="goBackToRole()" class="text-xs text-slate-400 font-bold hover:text-teal-700">
+            ← Back
+        </button>
+    </div>
+
+    <!-- LOGIN MODULE -->
+    <div id="login-container">
+        <div class="text-center mb-10">
+            <div class="w-16 h-16 bg-teal-100 rounded-3xl flex items-center justify-center text-teal-600 mx-auto mb-4">
+                <i class="fa-solid fa-fingerprint text-3xl"></i>
+            </div>
+            <h1 class="text-2xl font-extrabold text-teal-950">Maris<span class="text-teal-500">Track</span></h1>
+            <p class="text-slate-400 text-xs mt-1">NSTP Administrator Portal</p>
+        </div>
+        <div class="space-y-4">
+            <input type="email" id="login-email" placeholder="School ID"
+                class="w-full px-6 py-4 bg-slate-50 rounded-2xl focus:ring-2 focus:ring-teal-500 outline-none transition-all">
+            <input type="password" id="login-password" placeholder="Password"
+                class="w-full px-6 py-4 bg-slate-50 rounded-2xl focus:ring-2 focus:ring-teal-500 outline-none transition-all">
+            <button onclick="handleLogin()" class="w-full py-4 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl font-bold uppercase tracking-widest text-xs shadow-lg transition-all active:scale-95">Sign In</button>
+            <button onclick="switchAuth('forgot')" class="w-full text-teal-600 font-bold text-xs hover:text-teal-800">Forgot Password?</button>
+        </div>
+    </div>
+
+    <!-- FORGOT MODULE -->
+    <div id="forgot-container" class="hidden">
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 bg-amber-50 rounded-3xl flex items-center justify-center text-amber-600 mx-auto mb-4">
+                <i class="fa-solid fa-key text-2xl"></i>
+            </div>
+            <h2 class="text-xl font-extrabold text-teal-950">Reset Request</h2>
+            <p class="text-slate-400 text-xs mt-2">Enter your email to receive a recovery link.</p>
+        </div>
+        <div class="space-y-4">
+            <input type="email" id="forgot-email" placeholder="Registered Email" class="w-full px-6 py-4 bg-slate-50 rounded-2xl focus:ring-2 focus:ring-teal-500 outline-none">
+            <button onclick="simulateResetEmail()" class="w-full py-4 bg-teal-950 text-white rounded-2xl font-bold text-xs uppercase tracking-widest active:scale-95 transition-all">Send Reset Link</button>
+            <button onclick="switchAuth('login')" class="w-full text-slate-400 font-bold text-xs">Back to Login</button>
+        </div>
+    </div>
+
+    <!-- RESET MODULE -->
+    <div id="reset-container" class="hidden">
+        <div class="text-center mb-8">
+            
+            <h2 class="text-xl font-extrabold text-teal-950">New Password</h2>
+            <p class="text-slate-400 text-xs mt-2">Create a new secure password.</p>
+        </div>
+        <div class="space-y-4">
+            <input type="password" id="new-password" placeholder="New Password" class="w-full px-6 py-4 bg-slate-50 rounded-2xl focus:ring-2 focus:ring-teal-500 outline-none">
+            <input type="password" id="confirm-new-password" placeholder="Confirm Password" class="w-full px-6 py-4 bg-slate-50 rounded-2xl focus:ring-2 focus:ring-teal-500 outline-none">
+            <button onclick="submitNewPassword()" class="w-full py-4 bg-teal-600 text-white rounded-2xl font-bold text-xs uppercase tracking-widest active:scale-95 transition-all">Update Password</button>
+        </div>
+    </div>
+
+    <!-- REGISTER MODULE -->
+    <div id="register-container" class="hidden">
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 bg-teal-50 rounded-3xl flex items-center justify-center text-teal-600 mx-auto mb-4">
+                <i class="fa-solid fa-user-plus text-2xl"></i>
+            </div>
+            <h2 class="text-xl font-extrabold text-teal-950">Student Registration</h2>
+            <p class="text-slate-400 text-xs mt-2">Complete your student details below.</p>
+        </div>
+
+        <div class="space-y-4">
+            <!-- ✅ NEW: School ID -->
+            <input type="text" id="reg-school-id" placeholder="School ID"
+                class="w-full px-6 py-4 bg-slate-50 rounded-2xl focus:ring-2 focus:ring-teal-500 outline-none">
+
+            <input type="text" id="reg-fname" placeholder="First Name" class="w-full px-6 py-4 bg-slate-50 rounded-2xl focus:ring-2 focus:ring-teal-500 outline-none">
+            <input type="text" id="reg-lname" placeholder="Last Name" class="w-full px-6 py-4 bg-slate-50 rounded-2xl focus:ring-2 focus:ring-teal-500 outline-none">
+            <input type="email" id="reg-email" placeholder="Email Address" class="w-full px-6 py-4 bg-slate-50 rounded-2xl focus:ring-2 focus:ring-teal-500 outline-none">
+            <input type="password" id="reg-password" placeholder="Password" class="w-full px-6 py-4 bg-slate-50 rounded-2xl focus:ring-2 focus:ring-teal-500 outline-none">
+
+           
+
+            <select id="reg-program"
+                    class="w-full px-6 py-4 bg-slate-50 rounded-2xl focus:ring-2 focus:ring-teal-500 outline-none"
+                    data-dynamic="nstp_program">
+                <option value="">Select NSTP Program</option>
+            </select>
+
+            <button onclick="handleRegister()" class="w-full py-4 bg-teal-600 text-white rounded-2xl font-bold uppercase tracking-widest text-xs shadow-lg transition-all active:scale-95">Register</button>
+            <button onclick="switchAuth('login')" class="w-full text-slate-400 font-bold text-xs">Back to Login</button>
+        </div>
+    </div>
+
+</div> <!-- END AUTH PAGE -->
+
+<!-- SUCCESS PAGE -->
+<div id="success-page" class="hidden fixed inset-0 bg-slate-50 font-sans flex items-center justify-center p-6 z-50">
+    <div class="text-center fade-in">
+        <div class="relative mb-8 flex justify-center">
+            <div class="absolute inset-0 bg-teal-100 rounded-full scale-150 opacity-20 animate-ping"></div>
+            <div class="w-24 h-24 bg-teal-100 rounded-full flex items-center justify-center text-teal-600 relative z-10 shadow-sm">
+                <i class="fa-solid fa-circle-check text-5xl"></i>
+            </div>
+        </div>
+        <h2 class="text-3xl font-extrabold text-teal-950 tracking-tight">Successfully Authenticated</h2>
+        <p class="text-slate-500 text-sm mt-3 font-medium max-w-xs mx-auto leading-relaxed">
+            Identity verified. Redirecting to Dashboard...
+        </p>
+        <div class="mt-10 flex justify-center gap-1.5">
+            <div class="w-2 h-2 bg-teal-600 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+            <div class="w-2 h-2 bg-teal-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+            <div class="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style="animation-delay: 0.3s"></div>
+        </div>
+    </div>
+</div>
+
+<!-- GLOBAL MODAL -->
+<div id="modal-overlay" class="fixed inset-0 z-[200] bg-teal-950/70 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div id="modal-content" class="bg-white w-full max-w-sm rounded-[2.5rem] shadow-2xl overflow-hidden modal-enter"></div>
+</div>
+
+<!-- ✅ Tiny helper: keeps UI same, but removes hard-coded options -->
+
+
+<script src="MT_login.js"></script>
+</body>
+</html>
