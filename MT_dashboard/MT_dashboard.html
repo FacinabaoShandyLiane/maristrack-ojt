@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MarisTrack | NSTP Admin Portal</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <link rel="stylesheet" href="MT_dashboard.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- (Optional) If you use the same darkCyan palette like Settings -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            darkCyan: {
+              50: '#f1f9f9', 100: '#daefef', 200: '#b9dfdf', 300: '#8bc6c6',
+              400: '#56a3a3', 500: '#3a8787', 600: '#2d6d6d', 700: '#285959',
+              800: '#254a4a', 900: '#223f3f', 950: '#0f2424',
+            },
+          },
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+        }
+      }
+    }
+  </script>
+</head>
+
+<body data-page="dashboard" class="flex h-screen overflow-hidden bg-slate-50 text-slate-900 font-sans">
+
+  <!-- Logout Modal (modern) -->
+  <div id="logoutModal"
+       class="fixed inset-0 z-[100] hidden items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm modal-overlay">
+    <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl modal-content border border-slate-100 relative">
+      <button id="btnCloseModal" type="button"
+              class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition-colors">
+        <i class="fa-solid fa-xmark text-xl"></i>
+      </button>
+
+      <div class="flex flex-col items-center text-center">
+        <div class="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center text-red-500 mb-6 text-3xl">
+          <i class="fa-solid fa-circle-exclamation"></i>
+        </div>
+
+        <h3 class="text-xl font-bold text-slate-900 mb-2">Confirm Logout</h3>
+        <p class="text-slate-500 mb-8 px-4 font-medium">
+          Are you sure you want to log out of MarisTrack? You'll need to sign in again to access your tracks.
+        </p>
+
+        <div class="flex gap-3 w-full">
+          <button id="btnCancelLogout" type="button"
+                  class="flex-1 py-4 px-6 rounded-2xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition-all">
+            Cancel
+          </button>
+          <button id="btnConfirmLogout" type="button"
+                  class="flex-1 py-4 px-6 rounded-2xl bg-teal-500 text-white font-bold shadow-lg shadow-teal-500/30 hover:bg-teal-600 hover:-translate-y-0.5 transition-all">
+            Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ MODERN SIDEBAR (same structure as Settings) -->
+  <aside id="sidebar" class="sidebar expanded">
+    <!-- Header / Logo -->
+    <div class="flex items-center h-20 px-5 mb-8 relative">
+      <div class="logo-container flex items-center">
+        <div class="w-9 h-9 bg-teal-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-teal-500/30 mr-3 shrink-0">
+          <span class="font-bold text-xl">M</span>
+        </div>
+        <h1 class="text-xl font-bold tracking-tight text-white whitespace-nowrap">
+          Maris<span class="text-teal-400">Track</span>
+        </h1>
+      </div>
+
+      <!-- Chevron Toggle -->
+      <button id="btnToggleSidebar" class="chevron-btn" type="button" aria-label="Toggle sidebar">
+        <i class="fa-solid fa-chevron-right text-xl"></i>
+      </button>
+    </div>
+
+    <!-- Navigation Menu -->
+    <nav class="flex-1 relative">
+      <div id="indicator" class="sliding-indicator"></div>
+
+      <ul class="space-y-[14px] pl-3 relative z-10" id="navList">
+        <li class="relative">
+          <button class="nav-item active" data-index="0" data-route="dashboard" type="button">
+            <div class="min-w-[54px] flex items-center justify-center text-xl">
+              <i class="fa-solid fa-gauge-high"></i>
+            </div>
+            <span class="nav-text">Dashboard</span>
+          </button>
+        </li>
+
+        <li class="relative">
+          <button class="nav-item" data-index="1" data-route="attendance" type="button">
+            <div class="min-w-[54px] flex items-center justify-center text-xl">
+              <i class="fa-solid fa-calendar-check"></i>
+            </div>
+            <span class="nav-text">Attendance</span>
+          </button>
+        </li>
+
+        <li class="relative">
+          <button class="nav-item" data-index="2" data-route="reports" type="button">
+            <div class="min-w-[54px] flex items-center justify-center text-xl">
+              <i class="fa-solid fa-chart-column"></i>
+            </div>
+            <span class="nav-text">Reports</span>
+          </button>
+        </li>
+
+        <li class="relative">
+          <button class="nav-item" data-index="3" data-route="settings" type="button">
+            <div class="min-w-[54px] flex items-center justify-center text-xl">
+              <i class="fa-solid fa-gear"></i>
+            </div>
+            <span class="nav-text">Settings</span>
+          </button>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- Footer -->
+    <div class="p-3 mt-auto mb-6">
+      <div class="flex flex-col items-start space-y-4">
+        <div class="flex items-center w-full px-2">
+          <div class="min-w-[40px] flex items-center justify-center text-teal-500/80 text-3xl">
+            <i class="fa-solid fa-circle-user"></i>
+          </div>
+
+          <!-- keep nav-text so it hides when collapsed -->
+          <div class="ml-3 overflow-hidden nav-text">
+            <p id="admin-name" class="text-sm font-bold text-white truncate leading-tight">Administrator</p>
+            <p class="text-[11px] text-slate-500 font-medium tracking-wide">Administrator</p>
+          </div>
+        </div>
+
+        <button id="btnOpenLogout" type="button"
+                class="flex items-center w-full px-2 py-2 text-slate-400 hover:text-red-400 transition-all duration-300 group">
+          <div class="min-w-[40px] flex items-center justify-center text-xl">
+            <i class="fa-solid fa-right-from-bracket"></i>
+          </div>
+          <span class="ml-3 font-semibold text-sm nav-text">Logout</span>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ✅ MAIN CONTENT -->
+  <main class="flex-grow flex flex-col h-screen overflow-hidden">
+    <!-- HEADER -->
+    <header class="h-20 fancy-header px-8 flex items-center justify-between shrink-0 sticky top-0 z-40">
+      <h1 id="page-title" class="text-lg font-bold text-darkCyan-900">Dashboard</h1>
+
+      <div class="flex items-center gap-6">
+        <div class="flex flex-col text-right">
+          <span id="header-clock" class="text-sm font-bold text-slate-700">--:--</span>
+          <span id="header-date" class="text-[10px] text-slate-400 font-medium">---</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- CONTENT -->
+    <div id="main-content" class="p-6 overflow-y-auto custom-scrollbar flex-grow">
+      <!-- DASHBOARD TAB -->
+      <div id="tab-dashboard" class="tab-content space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+          <!-- Statistics -->
+          <div class="lg:col-span-4 space-y-6">
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center">
+              <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-6 self-start">
+                Program Distribution
+              </h3>
+
+              <div class="relative w-48 h-48 mb-8">
+                <svg viewBox="0 0 36 36" class="w-full h-full transform -rotate-90">
+                  <circle cx="18" cy="18" r="16" fill="transparent" stroke="#f1f5f9" stroke-width="3"></circle>
+                  <circle id="pie-segment" cx="18" cy="18" r="16" fill="transparent" stroke="currentColor" stroke-width="3"
+                          stroke-dasharray="0 100" class="chart-slice text-darkCyan-500"></circle>
+                </svg>
+
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                  <span id="pie-perc" class="text-3xl font-black text-darkCyan-950 leading-none">0%</span>
+                  <span id="pie-name" class="text-[10px] font-bold text-slate-400 uppercase mt-1">Loading…</span>
+                </div>
+              </div>
+
+              <div id="program-list" class="w-full space-y-2"></div>
+            </div>
+          </div>
+
+          <!-- Right Column -->
+          <div class="lg:col-span-8 space-y-6">
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Fancy dropdown -->
+              <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 relative">
+                <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Academic Term</h3>
+
+                <div class="relative">
+                  <button id="fancy-dropdown-trigger" type="button"
+                          class="w-full flex items-center justify-between p-3.5 bg-darkCyan-50/50 border border-darkCyan-100 rounded-xl text-sm font-bold text-darkCyan-900 hover:bg-darkCyan-50 transition-all">
+                    <span id="selected-term-label">Loading terms…</span>
+                    <i class="fa-solid fa-chevron-down text-[10px] text-darkCyan-400 transition-transform duration-300"
+                       id="dropdown-arrow"></i>
+                  </button>
+
+                  <div id="fancy-dropdown-options"
+                       class="hidden absolute top-full left-0 right-0 mt-2 bg-white border border-slate-100 rounded-2xl shadow-xl z-[60] overflow-hidden p-1.5">
+                    <!-- JS injects term buttons here -->
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Quick Section</h3>
+                <div id="section-pills" class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto custom-scrollbar p-1"></div>
+              </div>
+            </div>
+
+            <!-- Preview Table -->
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+              <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+                <h3 class="font-bold text-darkCyan-950 flex items-center gap-2">
+                  Live Preview
+                  <span id="preview-count"
+                        class="text-[10px] bg-darkCyan-100 text-darkCyan-700 px-2 py-0.5 rounded-full">
+                    0 Students
+                  </span>
+                </h3>
+
+                <button id="btnShowAll" type="button"
+                        class="px-2 py-2 bg-darkCyan-500 text-darkCyan-50 text-[8px] font-black uppercase tracking-widest rounded-xl hover:bg-darkCyan-800 transition-all">
+                  Show All
+                </button>
+              </div>
+
+              <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                  <thead class="bg-slate-50 text-[9px] uppercase font-black text-slate-400 tracking-widest border-b border-slate-100">
+                    <tr>
+                      <th class="px-6 py-4">ID</th>
+                      <th class="px-6 py-4">Full Name</th>
+                      <th class="px-6 py-4">Department</th>
+                      <th class="px-6 py-4">Course</th>
+                      <th class="px-6 py-4">Year</th>
+                      <th class="px-6 py-4">Program</th>
+                      <th class="px-6 py-4 text-center">Section</th>
+                      <th class="px-6 py-4 text-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dashboard-tbody" class="text-xs font-medium text-slate-600 divide-y divide-slate-50"></tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Existing modal overlay -->
+  <div id="modal-overlay"
+       class="modal-bg fixed inset-0 z-[100] bg-darkCyan-950/60 hidden flex items-center justify-center p-4">
+    <div id="modal-container"
+         class="bg-white w-full max-w-lg rounded-3xl shadow-2xl transform transition-all scale-95 opacity-0 duration-300 overflow-hidden"></div>
+  </div>
+
+  <script src="MT_dashboard.js"></script>
+</body>
+</html>

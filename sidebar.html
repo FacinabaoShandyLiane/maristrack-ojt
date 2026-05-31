@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MarisTrack - Modern Sidebar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        :root {
+            --sidebar-bg: #0a1622;
+            --active-bg: #f8fafc; /* Matches main content background */
+            --teal-400: #2dd4bf;
+            --teal-500: #14b8a6;
+            --item-height: 52px;
+            --item-gap: 14px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--active-bg);
+            margin: 0;
+            overflow: hidden;
+        }
+
+        /* Sidebar Transitions */
+        .sidebar {
+            width: 80px;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            background-color: var(--sidebar-bg);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 20;
+        }
+
+        .sidebar.expanded {
+            width: 256px;
+        }
+
+        /* Sliding Indicator - Fixed "Tail" Issue */
+        .sliding-indicator {
+            position: absolute;
+            right: 0; /* Flush with edge to remove tail */
+            height: var(--item-height);
+            background: var(--active-bg);
+            border-top-left-radius: 26px;
+            border-bottom-left-radius: 26px;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 0;
+            /* Shadow only on the left side to avoid bleeding into content */
+            box-shadow: -8px 0 15px rgba(0,0,0,0.08); 
+            left: 10px;
+            top: 0;
+        }
+
+        .sidebar.expanded .sliding-indicator {
+            left: 12px;
+        }
+
+        /* Curve logic - ensured right: 0 to stay flush */
+        .sliding-indicator::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            right: 0;
+            width: 20px;
+            height: 20px;
+            background: transparent;
+            border-bottom-right-radius: 20px;
+            box-shadow: 10px 10px 0 10px var(--active-bg);
+            pointer-events: none;
+        }
+
+        .sliding-indicator::after {
+            content: '';
+            position: absolute;
+            bottom: -20px;
+            right: 0;
+            width: 20px;
+            height: 20px;
+            background: transparent;
+            border-top-right-radius: 20px;
+            box-shadow: 10px -10px 0 10px var(--active-bg);
+            pointer-events: none;
+        }
+
+        /* Navigation Items */
+        .nav-item {
+            height: var(--item-height);
+            display: flex;
+            align-items: center;
+            width: 100%;
+            color: #64748b;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            z-index: 10;
+            cursor: pointer;
+            border: none;
+            background: none;
+            padding: 0;
+            text-align: left;
+        }
+
+        .nav-item:hover {
+            color: #cbd5e1;
+        }
+
+        /* Lift Effect - Item Active */
+        .nav-item.active {
+            color: var(--teal-500);
+            transform: scale(1.12) translateX(12px);
+        }
+
+        .nav-text {
+            white-space: nowrap;
+            font-weight: 600;
+            opacity: 0;
+            transform: translateX(-10px);
+            transition: all 0.5s ease;
+            pointer-events: none;
+            margin-left: 4px;
+        }
+
+        .sidebar.expanded .nav-text {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: auto;
+        }
+
+        /* Logo and Header */
+        .logo-container {
+            transition: all 0.5s ease;
+        }
+        .sidebar:not(.expanded) .logo-container {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+
+        /* Chevron Toggle */
+        .chevron-btn {
+            position: absolute;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            color: var(--teal-400);
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+        }
+
+        /* Collapsed: Aligned with icons */
+        .sidebar:not(.expanded) .chevron-btn {
+            right: 50%;
+            transform: translateX(50%);
+            top: 28px;
+        }
+
+        /* Expanded: Inside the sidebar */
+        .sidebar.expanded .chevron-btn {
+            right: 16px;
+            top: 28px;
+            transform: rotate(180deg);
+        }
+
+        /* Modal Animations */
+        @keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes modalSlideUp { 
+            from { opacity: 0; transform: translateY(20px) scale(0.95); } 
+            to { opacity: 1; transform: translateY(0) scale(1); } 
+        }
+
+        .modal-overlay {
+            display: none;
+            animation: modalFadeIn 0.2s ease-out forwards;
+        }
+        .modal-overlay.open {
+            display: flex;
+        }
+        .modal-content {
+            animation: modalSlideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+    </style>
+</head>
+<body class="flex h-screen">
+
+    <!-- Logout Modal -->
+    <div id="logoutModal" class="fixed inset-0 z-[100] items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm modal-overlay">
+        <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl modal-content border border-slate-100 relative">
+            <button onclick="closeModal()" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition-colors">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            
+            <div class="flex flex-col items-center text-center">
+                <div class="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center text-red-500 mb-6 text-3xl">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                </div>
+                
+                <h3 class="text-xl font-bold text-slate-900 mb-2">Confirm Logout</h3>
+                <p class="text-slate-500 mb-8 px-4 font-medium">
+                    Are you sure you want to log out of MarisTrack? You'll need to sign in again to access your tracks.
+                </p>
+                
+                <div class="flex gap-3 w-full">
+                    <button onclick="closeModal()" class="flex-1 py-4 px-6 rounded-2xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition-all">
+                        Cancel
+                    </button>
+                    <button onclick="confirmLogout()" class="flex-1 py-4 px-6 rounded-2xl bg-teal-500 text-white font-bold shadow-lg shadow-teal-500/30 hover:bg-teal-600 hover:-translate-y-0.5 transition-all">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar">
+        <!-- Header / Logo -->
+        <div class="flex items-center h-20 px-5 mb-8 relative">
+            <div class="logo-container flex items-center">
+                <div class="w-9 h-9 bg-teal-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-teal-500/30 mr-3 shrink-0">
+                    <span class="font-bold text-xl">M</span>
+                </div>
+                <h1 class="text-xl font-bold tracking-tight text-white whitespace-nowrap">
+                    Maris<span class="text-teal-400">Track</span>
+                </h1>
+            </div>
+
+            <!-- Chevron Toggle -->
+            <button onclick="toggleSidebar()" class="chevron-btn">
+                <i class="fa-solid fa-chevron-right text-xl"></i>
+            </button>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="flex-1 relative">
+            <div id="indicator" class="sliding-indicator"></div>
+
+            <ul class="space-y-[14px] pl-3 relative z-10" id="navList">
+                <li class="relative">
+                    <button class="nav-item active" data-index="0">
+                        <div class="min-w-[54px] flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-gauge-high"></i>
+                        </div>
+                        <span class="nav-text">Dashboard</span>
+                    </button>
+                </li>
+                <li class="relative">
+                    <button class="nav-item" data-index="1">
+                        <div class="min-w-[54px] flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-calendar-check"></i>
+                        </div>
+                        <span class="nav-text">Attendance</span>
+                    </button>
+                </li>
+                <li class="relative">
+                    <button class="nav-item" data-index="2">
+                        <div class="min-w-[54px] flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-chart-simple"></i>
+                        </div>
+                        <span class="nav-text">Reports</span>
+                    </button>
+                </li>
+                <li class="relative">
+                    <button class="nav-item" data-index="3">
+                        <div class="min-w-[54px] flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-gear"></i>
+                        </div>
+                        <span class="nav-text">Settings</span>
+                    </button>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Footer Area (No container, left aligned) -->
+        <div class="p-3 mt-auto mb-6">
+            <div class="flex flex-col items-start space-y-4">
+                <!-- Admin Role -->
+                <div class="flex items-center w-full px-2">
+                    <div class="min-w-[40px] flex items-center justify-center text-teal-500/80 text-3xl">
+                        <i class="fa-solid fa-circle-user"></i>
+                    </div>
+                    <div class="ml-3 overflow-hidden nav-text">
+                        <p class="text-sm font-bold text-white truncate leading-tight">Administrator</p>
+                        <p class="text-[11px] text-slate-500 font-medium tracking-wide">Super User</p>
+                    </div>
+                </div>
+
+                <!-- Logout -->
+                <button onclick="openModal()" class="flex items-center w-full px-2 py-2 text-slate-400 hover:text-red-400 transition-all duration-300 group">
+                    <div class="min-w-[40px] flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </div>
+                    <span class="ml-3 font-semibold text-sm nav-text">Logout</span>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 p-8 md:p-12 overflow-auto relative z-10">
+        <div class="max-w-5xl mx-auto">
+            <header class="mb-12">
+                <h2 class="text-4xl font-extrabold text-slate-900 tracking-tight">Dashboard</h2>
+                <p class="text-slate-500 mt-2 text-lg">Manage your project tracks and view detailed analytics.</p>
+            </header>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Stats Cards -->
+                <div class="bg-white p-8 rounded-[32px] shadow-sm border border-slate-200/60 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer group">
+                    <div class="w-14 h-14 bg-teal-50 rounded-2xl mb-8 flex items-center justify-center text-teal-600 text-2xl group-hover:bg-teal-500 group-hover:text-white transition-colors">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
+                    <div class="h-4 w-1/2 bg-slate-100 rounded-full mb-4"></div>
+                    <div class="h-3 w-3/4 bg-slate-50 rounded-full"></div>
+                </div>
+                <div class="bg-white p-8 rounded-[32px] shadow-sm border border-slate-200/60 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer group">
+                    <div class="w-14 h-14 bg-teal-50 rounded-2xl mb-8 flex items-center justify-center text-teal-600 text-2xl group-hover:bg-teal-500 group-hover:text-white transition-colors">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                    <div class="h-4 w-1/2 bg-slate-100 rounded-full mb-4"></div>
+                    <div class="h-3 w-3/4 bg-slate-50 rounded-full"></div>
+                </div>
+                <div class="bg-white p-8 rounded-[32px] shadow-sm border border-slate-200/60 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer group">
+                    <div class="w-14 h-14 bg-teal-50 rounded-2xl mb-8 flex items-center justify-center text-teal-600 text-2xl group-hover:bg-teal-500 group-hover:text-white transition-colors">
+                        <i class="fa-solid fa-bolt"></i>
+                    </div>
+                    <div class="h-4 w-1/2 bg-slate-100 rounded-full mb-4"></div>
+                    <div class="h-3 w-3/4 bg-slate-50 rounded-full"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const indicator = document.getElementById('indicator');
+        const navItems = document.querySelectorAll('.nav-item');
+        const modal = document.getElementById('logoutModal');
+
+        const ITEM_HEIGHT = 52;
+        const ITEM_GAP = 14;
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('expanded');
+        }
+
+        function updateIndicator(index) {
+            const topPosition = index * (ITEM_HEIGHT + ITEM_GAP);
+            indicator.style.top = `${topPosition}px`;
+        }
+
+        // Initialize indicator position
+        updateIndicator(0);
+
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                navItems.forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                const index = parseInt(item.getAttribute('data-index'));
+                updateIndicator(index);
+            });
+        });
+
+        // Modal Functions
+        function openModal() { modal.classList.add('open'); }
+        function closeModal() { modal.classList.remove('open'); }
+        function confirmLogout() { console.log("Logged out"); closeModal(); }
+
+        window.onclick = function(event) {
+            if (event.target == modal) { closeModal(); }
+        }
+    </script>
+</body>
+</html>

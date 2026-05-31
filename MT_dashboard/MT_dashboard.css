@@ -1,0 +1,304 @@
+/* =========================================================
+   MT_dashboard.css (FULL UPDATED — Modern Sidebar Compatible)
+   ✅ Matches Settings sidebar style + animation 1:1
+   ✅ Removes old sidebar-preload / sidebar-transition hacks for sidebar
+   ✅ Keeps your existing utilities (scrollbar, modal, status dots, etc.)
+========================================================= */
+
+/* =========================
+   Fonts
+========================= */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* =========================
+   Root / Theme (MATCH SETTINGS)
+========================= */
+:root{
+  /* Modern sidebar palette */
+  --sidebar-bg: #0a1622;
+  --active-bg: #f8fafc; /* background of main content */
+  --teal-400: #2dd4bf;
+  --teal-500: #14b8a6;
+
+  /* Sidebar sizing */
+  --item-height: 52px;
+  --item-gap: 14px;
+}
+
+html, body { height: 100%; }
+
+body{
+  font-family: 'Inter', sans-serif;
+  background-color: var(--active-bg);
+  margin: 0;
+  overflow: hidden;
+}
+
+/* =========================
+   Header (MATCH SETTINGS)
+========================= */
+.fancy-header{
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
+}
+
+/* =========================
+   Scrollbar (KEEP)
+========================= */
+.custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #3a8787; border-radius: 999px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+
+/* =========================
+   Modal blur (KEEP)
+========================= */
+.modal-bg { backdrop-filter: blur(6px); transition: opacity .2s ease; }
+
+/* =========================================================
+   ✅ MODERN SIDEBAR (MATCH SETTINGS 1:1)
+   EXPECTED HTML:
+     <aside id="sidebar" class="sidebar"> ... </aside>
+     <button id="btnToggleSidebar" class="chevron-btn">...</button>
+     .nav-item buttons + #indicator sliding indicator + .nav-text labels
+========================================================= */
+
+/* Sidebar container */
+.sidebar{
+  width: 80px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  background-color: var(--sidebar-bg);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 20;
+  flex-shrink: 0;
+}
+
+/* (Optional) kept for compatibility if you ever add this class */
+.sidebar-expanded-loading .sidebar { width: 256px; }
+
+.sidebar.expanded{
+  width: 256px;
+}
+
+/* Sliding Indicator */
+.sliding-indicator{
+  position: absolute;
+  right: 0;
+  height: var(--item-height);
+  background: var(--active-bg);
+  border-top-left-radius: 26px;
+  border-bottom-left-radius: 26px;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 0;
+  box-shadow: -8px 0 15px rgba(0,0,0,0.08);
+  left: 10px;
+  top: 0;
+}
+
+.sidebar.expanded .sliding-indicator{
+  left: 12px;
+}
+
+/* curves */
+.sliding-indicator::before{
+  content:'';
+  position:absolute;
+  top:-20px;
+  right:0;
+  width:20px;
+  height:20px;
+  background:transparent;
+  border-bottom-right-radius:20px;
+  box-shadow: 10px 10px 0 10px var(--active-bg);
+  pointer-events:none;
+}
+
+.sliding-indicator::after{
+  content:'';
+  position:absolute;
+  bottom:-20px;
+  right:0;
+  width:20px;
+  height:20px;
+  background:transparent;
+  border-top-right-radius:20px;
+  box-shadow: 10px -10px 0 10px var(--active-bg);
+  pointer-events:none;
+}
+
+/* nav items */
+.nav-item{
+  height: var(--item-height);
+  display:flex;
+  align-items:center;
+  width:100%;
+  color:#64748b;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position:relative;
+  z-index:10;
+  cursor:pointer;
+  border:none;
+  background:none;
+  padding:0;
+  text-align:left;
+}
+
+.nav-item:hover{ color:#cbd5e1; }
+
+.nav-item.active{
+  color: var(--teal-500);
+  transform: scale(1.12) translateX(12px);
+}
+
+/* nav label text (hidden when collapsed) */
+.nav-text{
+  white-space:nowrap;
+  font-weight:600;
+  opacity:0;
+  transform: translateX(-10px);
+  transition: all 0.5s ease;
+  pointer-events:none;
+  margin-left:4px;
+}
+
+.sidebar.expanded .nav-text{
+  opacity:1;
+  transform: translateX(0);
+  pointer-events:auto;
+}
+
+/* logo container fades when collapsed (MATCH SETTINGS — NOT display:none) */
+.logo-container{ transition: all 0.5s ease; }
+
+.sidebar:not(.expanded) .logo-container{
+  opacity:0;
+  transform: translateX(-20px);
+}
+
+/* chevron toggle */
+.chevron-btn{
+  position:absolute;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--teal-400);
+  z-index:50;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:32px;
+  height:32px;
+  background: transparent;
+  border:none;
+  cursor:pointer;
+}
+
+/* collapsed: centered on sidebar */
+.sidebar:not(.expanded) .chevron-btn{
+  right:50%;
+  transform: translateX(50%);
+  top:28px;
+}
+
+/* expanded: inside sidebar */
+.sidebar.expanded .chevron-btn{
+  right:16px;
+  top:28px;
+  transform: rotate(180deg);
+}
+
+/* =========================================================
+   ✅ DASHBOARD LOGOUT MODAL ANIMATION (KEEP)
+   (matches your Dashboard modal ids/classes)
+========================================================= */
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes modalSlideUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.modal-overlay{
+  display: none;
+  animation: modalFadeIn 0.2s ease-out forwards;
+}
+
+.modal-overlay.open{
+  display: flex;
+}
+
+.modal-content{
+  animation: modalSlideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* =========================================================
+   ✅ YOUR EXISTING UTILITIES (KEPT)
+   Notes:
+   - sidebar-transition is kept for other elements if needed,
+     BUT DO NOT apply it to #sidebar anymore
+========================================================= */
+
+/* ⚠️ Old sidebar transition utility — keep if other elements use it,
+   but DO NOT apply this class to the new #sidebar */
+.sidebar-transition { transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+
+/* Status dots */
+.status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.status-present { background-color: #10b981; box-shadow: 0 0 8px #10b98188; }
+.status-late { background-color: #f59e0b; box-shadow: 0 0 8px #f59e0b88; }
+.status-absent { background-color: #ef4444; box-shadow: 0 0 8px #ef444488; }
+
+/* Chart slice animation */
+.chart-slice { transition: stroke-dasharray 0.5s ease; stroke-linecap: round; }
+
+/* Check circles */
+.check-circle{
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #cbd5e1;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+}
+.check-circle.checked-green { background-color: #10b981; border-color: #10b981; }
+.check-circle.checked-yellow { background-color: #f59e0b; border-color: #f59e0b; }
+.check-circle.checked-red { background-color: #ef4444; border-color: #ef4444; }
+
+/* Tooltip */
+.tooltip{
+  visibility: hidden;
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e293b;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  white-space: nowrap;
+  opacity: 0;
+  z-index: 10;
+}
+.check-circle:hover .tooltip{ visibility: visible; opacity: 1; }
+
+/* Fancy dropdown animation */
+#fancy-dropdown-options{
+  transform-origin: top;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+}
+#fancy-dropdown-options.hidden{
+  display: none;
+  transform: scaleY(0.95);
+  opacity: 0;
+}
+#fancy-dropdown-options:not(.hidden){
+  display: block;
+  transform: scaleY(1);
+  opacity: 1;
+}

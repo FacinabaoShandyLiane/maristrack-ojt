@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="MT_attendance.css" />
+  <title>MarisTrack | NSTP Admin Portal</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            darkCyan: {
+              50: '#f1f9f9', 100: '#daefef', 200: '#b9dfdf', 300: '#8bc6c6',
+              400: '#56a3a3', 500: '#3a8787', 600: '#2d6d6d', 700: '#285959',
+              800: '#254a4a', 900: '#223f3f', 950: '#0f2424',
+            },
+          },
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+        }
+      }
+    }
+  </script>
+</head>
+
+<body data-page="attendance" class="flex h-screen overflow-hidden bg-slate-50 text-slate-900 font-sans">
+
+  <!-- ✅ MODERN SIDEBAR (MATCH DASHBOARD HTML 1:1) -->
+  <aside id="sidebar" class="sidebar expanded">
+    <!-- Header / Logo -->
+    <div class="flex items-center h-20 px-5 mb-8 relative">
+      <div class="logo-container flex items-center">
+        <div class="w-9 h-9 bg-teal-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-teal-500/30 mr-3 shrink-0">
+          <span class="font-bold text-xl">M</span>
+        </div>
+        <h1 class="text-xl font-bold tracking-tight text-white whitespace-nowrap">
+          Maris<span class="text-teal-400">Track</span>
+        </h1>
+      </div>
+
+      <!-- Chevron Toggle -->
+      <button id="btnToggleSidebar" class="chevron-btn" type="button" aria-label="Toggle sidebar">
+        <i class="fa-solid fa-chevron-right text-xl"></i>
+      </button>
+    </div>
+
+    <!-- Navigation Menu -->
+    <nav class="flex-1 relative">
+      <div id="indicator" class="sliding-indicator"></div>
+
+      <ul class="space-y-[14px] pl-3 relative z-10" id="navList">
+        <li class="relative">
+          <button class="nav-item" data-index="0" data-route="dashboard" type="button">
+            <div class="min-w-[54px] flex items-center justify-center text-xl">
+              <i class="fa-solid fa-gauge-high"></i>
+            </div>
+            <span class="nav-text">Dashboard</span>
+          </button>
+        </li>
+
+        <li class="relative">
+          <button class="nav-item active" data-index="1" data-route="attendance" type="button">
+            <div class="min-w-[54px] flex items-center justify-center text-xl">
+              <i class="fa-solid fa-calendar-check"></i>
+            </div>
+            <span class="nav-text">Attendance</span>
+          </button>
+        </li>
+
+        <li class="relative">
+          <button class="nav-item" data-index="2" data-route="reports" type="button">
+            <div class="min-w-[54px] flex items-center justify-center text-xl">
+              <i class="fa-solid fa-chart-column"></i>
+            </div>
+            <span class="nav-text">Reports</span>
+          </button>
+        </li>
+
+        <li class="relative">
+          <button class="nav-item" data-index="3" data-route="settings" type="button">
+            <div class="min-w-[54px] flex items-center justify-center text-xl">
+              <i class="fa-solid fa-gear"></i>
+            </div>
+            <span class="nav-text">Settings</span>
+          </button>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- Footer (MATCH DASHBOARD) -->
+    <div class="p-3 mt-auto mb-6">
+      <div class="flex flex-col items-start space-y-4">
+        <div class="flex items-center w-full px-2">
+          <div class="min-w-[40px] flex items-center justify-center text-teal-500/80 text-3xl">
+            <i class="fa-solid fa-circle-user"></i>
+          </div>
+
+          <!-- keep nav-text so it hides when collapsed -->
+          <div class="ml-3 overflow-hidden nav-text">
+            <p id="admin-name" class="text-sm font-bold text-white truncate leading-tight">Administrator</p>
+            <p id="admin-role" class="text-[11px] text-slate-500 font-medium tracking-wide">Super User</p>
+          </div>
+        </div>
+
+        <!-- ✅ Logout button matches Dashboard hook (no inline onclick) -->
+        <button id="btnOpenLogout" type="button"
+                class="flex items-center w-full px-2 py-2 text-slate-400 hover:text-red-400 transition-all duration-300 group">
+          <div class="min-w-[40px] flex items-center justify-center text-xl">
+            <i class="fa-solid fa-right-from-bracket"></i>
+          </div>
+          <span class="ml-3 font-semibold text-sm nav-text">Logout</span>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ✅ MAIN CONTENT WRAPPER (like Dashboard main) -->
+  <main class="flex-grow flex flex-col h-screen overflow-hidden">
+
+    <!-- ATTENDANCE HEADER (kept) -->
+    <div class="bg-darkCyan-900 px-8 py-3 flex items-center justify-between text-white shrink-0">
+      <div class="flex items-center gap-4">
+        <div>
+          <h2 class="text-xs font-black uppercase tracking-widest leading-none text-white">Attendance Session</h2>
+          <p class="text-[10px] text-darkCyan-300 font-bold" id="header-date-indicator">NO ACTIVE DATE</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-6">
+        <div class="hidden md:flex items-center gap-8 border-r border-white/10 pr-6">
+          <div class="text-center border-r border-white/5 pr-6">
+            <p class="text-[9px] font-bold text-darkCyan-400 uppercase mb-1">Total Students</p>
+            <p class="text-sm font-black text-white" id="stat-total">0</p>
+          </div>
+          <div class="text-center">
+            <p class="text-[9px] font-bold text-emerald-400 uppercase mb-1">Present</p>
+            <p class="text-[10px] font-black text-white/90">In: <span id="stat-p-in" class="text-white">0</span> | Out: <span id="stat-p-out" class="text-white">0</span></p>
+          </div>
+          <div class="text-center">
+            <p class="text-[9px] font-bold text-amber-400 uppercase mb-1">Late</p>
+            <p class="text-[10px] font-black text-white/90">In: <span id="stat-l-in" class="text-white">0</span> | Out: <span id="stat-l-out" class="text-white">0</span></p>
+          </div>
+
+          <div class="text-center">
+            <p class="text-[9px] font-bold text-blue-400 uppercase mb-1">Early Out</p>
+            <p class="text-[10px] font-black text-white/90">
+              Out: <span id="stat-eo-out" class="text-white">0</span>
+            </p>
+          </div>
+
+          <div class="text-center">
+            <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Excused</p>
+            <p class="text-[10px] font-black text-white/90">In: <span id="stat-e-in" class="text-white">0</span> | Out: <span id="stat-e-out" class="text-white">0</span></p>
+          </div>
+          <div class="text-center">
+            <p class="text-[9px] font-bold text-rose-400 uppercase mb-1">Absent</p>
+            <p class="text-[10px] font-black text-white/90">In: <span id="stat-a-in" class="text-white">0</span> | Out: <span id="stat-a-out" class="text-white">0</span></p>
+          </div>
+        </div>
+
+        <button onclick="openSaveSessionModal()"
+                class="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase transition-all shadow-lg shadow-emerald-950/20 active:scale-95">
+          <i class="fa-solid fa-cloud-arrow-up"></i> Save Session
+        </button>
+      </div>
+    </div>
+
+    <!-- SECOND HEADER (kept) -->
+    <header class="bg-white border-b border-slate-200 px-8 py-4 z-40 shrink-0">
+      <div class="flex flex-wrap items-center justify-between gap-6">
+        <div>
+          <h1 class="font-extrabold text-xl tracking-tight leading-none text-darkCyan-950">
+            Management <span class="text-darkCyan-500">Console</span>
+          </h1>
+          <p id="current-semester-display" class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">LOADING...</p>
+        </div>
+
+        <div class="flex gap-2">
+          <button onclick="moveToNSTP2()" class="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-[11px] font-bold hover:bg-slate-200 transition-all flex items-center shadow-sm">
+            <i class="fa-solid fa-person-arrow-up-from-line mr-2 text-darkCyan-600"></i> Move to NSTP 2
+          </button>
+          <button onclick="openManageSemester()" class="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-[11px] font-bold hover:bg-slate-200 transition-all flex items-center shadow-sm">
+            <i class="fa-solid fa-layer-group mr-2 text-darkCyan-600"></i> Manage Semester
+          </button>
+          <button onclick="openManagePrograms()" class="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-[11px] font-bold hover:bg-slate-200 transition-all flex items-center shadow-sm">
+            <i class="fa-solid fa-folder-plus mr-2 text-darkCyan-600"></i> Manage Programs
+          </button>
+          <button onclick="openSetDateModal()" class="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-[11px] font-bold hover:bg-slate-200 transition-all flex items-center shadow-sm">
+            <i class="fa-solid fa-calendar-day mr-2 text-darkCyan-600"></i> Set Date
+          </button>
+          <button onclick="openAssignSectionModal()" class="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-[11px] font-bold hover:bg-slate-200 transition-all flex items-center shadow-sm">
+            <i class="fa-solid fa-user-tag mr-2 text-darkCyan-600"></i> Assign Section
+          </button>
+          <button onclick="openAddStudentModal()" class="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-[11px] font-bold hover:bg-slate-200 transition-all flex items-center shadow-sm">
+            <i class="fa-solid fa-user-plus mr-2 text-darkCyan-600"></i> Add Student
+          </button>
+          <button onclick="triggerUpload()" class="px-5 py-2.5 bg-darkCyan-600 text-white rounded-xl text-[11px] font-bold hover:bg-darkCyan-700 shadow-lg shadow-darkCyan-100 transition-all flex items-center active:scale-95 group">
+            <i class="fa-solid fa-file-excel mr-2 transition-transform group-hover:rotate-12"></i> Excel Upload
+          </button>
+
+          <input id="excel-upload-master" type="file" accept=".xlsx,.xls" class="hidden" />
+          <input id="excel-upload-program" type="file" accept=".xlsx,.xls" class="hidden" />
+          <input id="excel-upload-attendance" type="file" accept=".xlsx,.xls" class="hidden" />
+        </div>
+      </div>
+    </header>
+
+    <!-- ✅ CONTENT (kept) -->
+    <div class="flex-grow flex overflow-hidden">
+      <div class="flex-grow flex flex-col p-6 overflow-hidden">
+        <div class="bg-white rounded-[2rem] border border-slate-200 shadow-sm flex flex-col h-full overflow-hidden">
+          <div class="p-5 border-b border-slate-100 flex flex-col gap-4">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Section Filter:</span>
+                <div class="flex flex-wrap gap-1 bg-slate-100 p-1 rounded-xl max-w-2xl overflow-x-auto custom-scrollbar no-scrollbar" id="section-filters"></div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Mark As:</span>
+                <div class="relative w-48 shadow-lg rounded-[2rem]" id="mark-as-dropdown-container"></div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-4">
+              <div class="relative flex-grow">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-300"></i>
+                <input id="search-input" onkeyup="renderTable()" type="text" placeholder="Search Student ID or Name..."
+                       class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-xs outline-none focus:ring-4 focus:ring-darkCyan-500/10 transition-all font-medium" />
+              </div>
+              <div class="px-6 py-3 bg-darkCyan-50 rounded-2xl text-darkCyan-700 text-xs font-black uppercase tracking-widest border border-darkCyan-100 whitespace-nowrap">
+                <span id="display-date">NO DATE SET</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex-grow overflow-auto custom-scrollbar">
+            <table class="w-full text-left border-collapse">
+              <thead class="sticky top-0 bg-white z-10 shadow-[0_1px_0_0_#f1f5f9]">
+                <tr class="text-[10px] uppercase font-black text-slate-400 tracking-widest">
+                  <th class="px-6 py-5">ID Number</th>
+                  <th class="px-6 py-5">Full Name</th>
+                  <th class="px-6 py-5">Program</th>
+                  <th class="px-6 py-5">Section</th>
+                  <th class="px-6 py-5 text-center">In</th>
+                  <th class="px-6 py-5 text-center">Out</th>
+                </tr>
+              </thead>
+              <tbody id="attendance-tbody" class="text-xs font-medium text-slate-600 divide-y divide-slate-50"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <aside class="w-72 p-6 bg-white border-l border-slate-200 flex flex-col gap-6 overflow-hidden hidden xl:flex">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest">Programs</h3>
+          <span id="program-count" class="bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded-full font-bold">0</span>
+        </div>
+        <div id="program-selector" class="flex flex-col gap-2 overflow-y-auto custom-scrollbar h-full flex-grow pb-4 pr-1"></div>
+      </aside>
+    </div>
+  </main>
+
+  <!-- ✅ Logout Modal (MATCH DASHBOARD STRUCTURE/IDS) -->
+  <div id="logoutModal"
+       class="fixed inset-0 z-[100] hidden items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm modal-overlay">
+    <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl modal-content border border-slate-100 relative">
+      <button id="btnCloseModal" type="button"
+              class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition-colors">
+        <i class="fa-solid fa-xmark text-xl"></i>
+      </button>
+
+      <div class="flex flex-col items-center text-center">
+        <div class="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center text-red-500 mb-6 text-3xl">
+          <i class="fa-solid fa-circle-exclamation"></i>
+        </div>
+
+        <h3 class="text-xl font-bold text-slate-900 mb-2">Confirm Logout</h3>
+        <p class="text-slate-500 mb-8 px-4 font-medium">
+          Are you sure you want to log out of MarisTrack? You'll need to sign in again to access your tracks.
+        </p>
+
+        <div class="flex gap-3 w-full">
+          <button id="btnCancelLogout" type="button"
+                  class="flex-1 py-4 px-6 rounded-2xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition-all">
+            Cancel
+          </button>
+          <button id="btnConfirmLogout" type="button"
+                  class="flex-1 py-4 px-6 rounded-2xl bg-teal-500 text-white font-bold shadow-lg shadow-teal-500/30 hover:bg-teal-600 hover:-translate-y-0.5 transition-all">
+            Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- UNIVERSAL MODAL OVERLAY (kept exactly) -->
+  <div id="modal-overlay" class="fixed inset-0 z-[100] bg-darkCyan-950/40 hidden flex items-center justify-center p-4 backdrop-blur-sm transition-all duration-300">
+    <div id="modal-container" class="bg-white w-full max-w-lg md:max-w-xl rounded-[2.5rem] shadow-2xl overflow-visible transform transition-all p-6 md:p-8 modal-enter"></div>
+  </div>
+
+
+
+  <script src="MT_attendance.js"></script>
+</body>
+</html>

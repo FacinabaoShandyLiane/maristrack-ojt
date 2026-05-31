@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MarisTrack | Admin Portal</title>
+
+    <link rel="stylesheet" href="MT_report.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              darkCyan: {
+                50: "#f1f9f9",
+                100: "#daefef",
+                200: "#b9dfdf",
+                300: "#8bc6c6",
+                400: "#56a3a3",
+                500: "#3a8787",
+                600: "#2d6d6d",
+                700: "#285959",
+                800: "#254a4a",
+                900: "#223f3f",
+                950: "#0f2424",
+              },
+            },
+            fontFamily: { sans: ["Inter", "sans-serif"] },
+          },
+        },
+      };
+    </script>
+  </head>
+
+  <body
+    class="bg-[#f8fafc] text-slate-900 font-sans h-screen flex overflow-hidden"
+    id="app"
+    data-api-base=""
+    data-endpoint-admin="/api/admin/me"
+    data-endpoint-programs="/api/programs"
+    data-endpoint-sections="/api/sections"
+    data-endpoint-report="/api/reports/attendance"
+  >
+    <!-- ✅ MODERN SIDEBAR -->
+    <aside id="sidebar" class="sidebar expanded">
+      <!-- Header / Logo -->
+      <div class="flex items-center h-20 px-5 mb-8 relative">
+        <div class="logo-container flex items-center">
+          <div
+            class="w-9 h-9 bg-teal-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-teal-500/30 mr-3 shrink-0"
+          >
+            <span class="font-bold text-xl">M</span>
+          </div>
+          <h1
+            class="text-xl font-bold tracking-tight text-white whitespace-nowrap"
+          >
+            Maris<span class="text-teal-400">Track</span>
+          </h1>
+        </div>
+
+        <!-- Chevron Toggle -->
+        <button id="btnToggleSidebar" type="button" class="chevron-btn">
+          <i class="fa-solid fa-chevron-right text-xl"></i>
+        </button>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="flex-1 relative">
+        <div id="indicator" class="sliding-indicator"></div>
+
+        <ul class="space-y-[14px] pl-3 relative z-10" id="navList">
+          <li class="relative">
+            <button
+              class="nav-item"
+              data-index="0"
+              data-route="dashboard"
+              type="button"
+            >
+              <div
+                class="min-w-[54px] flex items-center justify-center text-xl"
+              >
+                <i class="fa-solid fa-gauge-high"></i>
+              </div>
+              <span class="nav-text">Dashboard</span>
+            </button>
+          </li>
+
+          <li class="relative">
+            <button
+              class="nav-item"
+              data-index="1"
+              data-route="attendance"
+              type="button"
+            >
+              <div
+                class="min-w-[54px] flex items-center justify-center text-xl"
+              >
+                <i class="fa-solid fa-calendar-check"></i>
+              </div>
+              <span class="nav-text">Attendance</span>
+            </button>
+          </li>
+
+          <li class="relative">
+            <button
+              class="nav-item active"
+              data-index="2"
+              data-route="reports"
+              type="button"
+            >
+              <div
+                class="min-w-[54px] flex items-center justify-center text-xl"
+              >
+                <i class="fa-solid fa-chart-column"></i>
+              </div>
+              <span class="nav-text">Reports</span>
+            </button>
+          </li>
+
+          <li class="relative">
+            <button
+              class="nav-item"
+              data-index="3"
+              data-route="settings"
+              type="button"
+            >
+              <div
+                class="min-w-[54px] flex items-center justify-center text-xl"
+              >
+                <i class="fa-solid fa-gear"></i>
+              </div>
+              <span class="nav-text">Settings</span>
+            </button>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- Footer -->
+      <div class="p-3 mt-auto mb-6">
+        <div class="flex flex-col items-start space-y-4">
+          <div class="flex items-center w-full px-2">
+            <div
+              class="min-w-[40px] flex items-center justify-center text-teal-500/80 text-3xl"
+            >
+              <i class="fa-solid fa-circle-user"></i>
+            </div>
+
+            <!-- ✅ removed hardcoded labels, kept IDs, added data-bind -->
+            <div class="ml-3 overflow-hidden nav-text">
+              <p
+                id="admin-name"
+                class="text-sm font-bold text-white truncate leading-tight"
+              >
+                Administrator
+              </p>
+              <p class="text-[11px] text-slate-500 font-medium tracking-wide">
+                Administrator
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onclick="confirmLogout()"
+            class="flex items-center w-full px-2 py-2 text-slate-400 hover:text-red-400 transition-all duration-300 group"
+          >
+            <div class="min-w-[40px] flex items-center justify-center text-xl">
+              <i class="fa-solid fa-right-from-bracket"></i>
+            </div>
+            <span class="ml-3 font-semibold text-sm nav-text">Logout</span>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-grow flex flex-col h-screen overflow-hidden">
+      <header
+        class="h-20 fancy-header px-8 flex items-center justify-between shrink-0 sticky top-0 z-40"
+      >
+        <div class="flex flex-col text-left">
+          <h1
+            id="header-title"
+            class="text-xl font-extrabold text-slate-800 tracking-tight"
+          >
+            Reports
+          </h1>
+          <p
+            class="text-[10px] font-semibold text-darkCyan-600 uppercase tracking-widest"
+          >
+            Attendance & Performance Audit
+          </p>
+        </div>
+        <div class="flex items-center gap-6">
+          <div class="flex flex-col text-right">
+            <span id="header-clock" class="text-sm font-bold text-slate-700"
+              >--:--</span
+            >
+            <span
+              id="header-date"
+              class="text-[10px] text-slate-400 font-medium"
+              >---</span
+            >
+          </div>
+        </div>
+      </header>
+
+      <div
+        id="main-scroll"
+        class="p-6 overflow-y-auto custom-scrollbar flex-grow space-y-6 text-left"
+      >
+        <!-- TAB CONTENT WRAPPERS -->
+        <div
+          id="tab-dashboard"
+          class="tab-content py-20 text-center animate-fade"
+        >
+          <p class="text-slate-400 italic text-sm">
+            Dashboard analytical overview placeholder.
+          </p>
+        </div>
+
+        <div
+          id="tab-attendance"
+          class="tab-content py-20 text-center animate-fade"
+        >
+          <p class="text-slate-400 italic text-sm">
+            Live attendance tracking module placeholder.
+          </p>
+        </div>
+
+        <div
+          id="tab-settings"
+          class="tab-content py-20 text-center animate-fade"
+        >
+          <p class="text-slate-400 italic text-sm">
+            System configuration and admin settings placeholder.
+          </p>
+        </div>
+
+        <!-- REPORTS TAB -->
+        <div id="tab-reports" class="tab-content active space-y-6 animate-fade">
+          <div class="flex flex-col gap-6">
+            <!-- Config Section -->
+            <div class="w-full">
+              <div
+                class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-6 relative min-h-[220px]"
+              >
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div class="space-y-4">
+                    <h3 class="config-label">Choose Interval</h3>
+                    <div
+                      class="flex bg-slate-50 p-1.5 rounded-2xl border border-slate-100"
+                    >
+                      <button
+                        type="button"
+                        onclick="setReportInterval('day', this)"
+                        class="int-btn active-int flex-1 py-4 rounded-xl text-xs font-bold transition-all bg-white shadow-sm text-darkCyan-700"
+                      >
+                        Day
+                      </button>
+                      <button
+                        type="button"
+                        onclick="setReportInterval('weekly', this)"
+                        class="int-btn flex-1 py-4 rounded-xl text-xs font-bold transition-all text-slate-500 hover:text-darkCyan-600"
+                      >
+                        Weekly
+                      </button>
+                      <button
+                        type="button"
+                        onclick="setReportInterval('semester', this)"
+                        class="int-btn flex-1 py-4 rounded-xl text-xs font-bold transition-all text-slate-500 hover:text-darkCyan-600"
+                      >
+                        Semester
+                      </button>
+                    </div>
+                  </div>
+
+                  <div
+                    id="target-date-container"
+                    class="space-y-4 relative opacity-0 invisible transition-all duration-300"
+                  >
+                    <!-- Injected by JS -->
+                  </div>
+                </div>
+
+                <button
+                  id="compile-btn"
+                  type="button"
+                  onclick="promptCompile()"
+                  class="w-full py-4 bg-darkCyan-600 text-white rounded-[1.5rem] text-xs font-black uppercase tracking-widest shadow-xl shadow-darkCyan-200/50 hover:bg-darkCyan-700 transition-all transform active:scale-[0.98]"
+                >
+                  Compile Data
+                </button>
+              </div>
+            </div>
+
+            <!-- STATS AREA -->
+            <div id="stats-area" class="w-full">
+              <div
+                id="empty-state-reports"
+                class="h-full min-h-[180px] flex flex-col items-center justify-center p-8 bg-white/50 rounded-[2rem] border-2 border-dashed border-slate-200 text-center"
+              >
+                <i
+                  class="fa-solid fa-database text-4xl text-slate-200 mb-4"
+                ></i>
+                <h4 class="font-bold text-slate-600 text-sm">
+                  Awaiting Compilation
+                </h4>
+                <p class="text-[11px] text-slate-400 font-medium mt-1">
+                  Pick interval + date then compile
+                </p>
+              </div>
+              <div
+                id="stats-container"
+                class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4"
+              ></div>
+            </div>
+          </div>
+
+          <!-- TABLE CARD -->
+          <div
+            id="table-card"
+            class="hidden bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden mt-6"
+          >
+            <div
+              class="p-8 border-b border-slate-50 flex flex-wrap items-center justify-between gap-6"
+            >
+              <div class="space-y-1 text-left">
+                <h3
+                  id="table-title"
+                  class="text-xl font-bold text-slate-800 tracking-tight"
+                >
+                  Attendance Log
+                </h3>
+                <p
+                  id="table-period-subtitle"
+                  class="text-[11px] font-bold text-darkCyan-600 uppercase tracking-widest italic"
+                ></p>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-4">
+                <div class="relative w-56">
+                  <i
+                    class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 text-xs"
+                  ></i>
+                  <input
+                    type="text"
+                    id="student-search"
+                    onkeyup="handleSearch()"
+                    placeholder="Search Name or ID..."
+                    class="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-darkCyan-500/10"
+                  />
+                </div>
+
+                <!-- ✅ SECTION DROPDOWN (DYNAMIC) -->
+
+                <!-- ✅ PROGRAM DROPDOWN (DYNAMIC) -->
+
+                <button
+                  type="button"
+                  onclick="downloadExcel()"
+                  class="flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 active:scale-95 group"
+                >
+                  <i
+                    class="fa-solid fa-file-excel group-hover:rotate-12 transition-transform"
+                  ></i>
+                  <span class="hidden sm:inline">Export Excel</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="overflow-x-auto text-center">
+              <table class="w-full text-left border-collapse">
+                <thead
+                  id="report-thead"
+                  class="bg-slate-50 text-[10px] uppercase font-black text-slate-400 tracking-widest border-b border-slate-100 text-center"
+                ></thead>
+                <tbody
+                  id="report-tbody"
+                  class="text-xs font-medium text-slate-600 divide-y divide-slate-50 text-center"
+                ></tbody>
+              </table>
+            </div>
+
+            <!-- Pagination -->
+            <div
+              class="p-6 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between"
+            >
+              <div class="flex items-center gap-4">
+                <p
+                  class="text-[10px] font-black text-slate-400 uppercase tracking-wider"
+                >
+                  Rows
+                </p>
+                <div class="relative group">
+                  <select
+                    id="rows-per-page"
+                    onchange="changeRowLimit(this.value)"
+                    class="bg-white border border-slate-200 rounded-full px-5 py-1.5 text-xs font-bold outline-none cursor-pointer shadow-md hover:shadow-xl transition-all appearance-none pr-10"
+                  >
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                  </select>
+                  <i
+                    class="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-[8px] pointer-events-none text-slate-400"
+                  ></i>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  onclick="prevPage()"
+                  class="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-darkCyan-600 transition-all"
+                >
+                  <i class="fa-solid fa-chevron-left text-[10px]"></i>
+                </button>
+                <div id="page-numbers" class="flex gap-1"></div>
+                <button
+                  type="button"
+                  onclick="nextPage()"
+                  class="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-darkCyan-600 transition-all"
+                >
+                  <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                </button>
+              </div>
+
+              <p
+                id="pagination-info"
+                class="text-[10px] font-bold text-slate-400 uppercase"
+              ></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- MODAL OVERLAY -->
+    <div
+      id="modal-overlay"
+      class="fixed inset-0 z-[10000] bg-darkCyan-950/60 hidden flex items-center justify-center p-4 backdrop-blur-sm"
+      onclick="handleOverlayClick(event)"
+    >
+      <div
+        id="modal-container"
+        class="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl transform transition-all scale-95 opacity-0 duration-300 overflow-hidden"
+        onclick="event.stopPropagation()"
+      ></div>
+    </div>
+
+    <!-- Logout Modal (modern) -->
+    <div
+      id="logoutModal"
+      class="fixed inset-0 z-[100] hidden items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm modal-overlay"
+    >
+      <div
+        class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl modal-content border border-slate-100 relative"
+      >
+        <button
+          id="btnCloseModal"
+          type="button"
+          class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition-colors"
+        >
+          <i class="fa-solid fa-xmark text-xl"></i>
+        </button>
+
+        <div class="flex flex-col items-center text-center">
+          <div
+            class="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center text-red-500 mb-6 text-3xl"
+          >
+            <i class="fa-solid fa-circle-exclamation"></i>
+          </div>
+
+          <h3 class="text-xl font-bold text-slate-900 mb-2">Confirm Logout</h3>
+
+          <p class="text-slate-500 mb-8 px-4 font-medium">
+            Are you sure you want to log out of MarisTrack? You'll need to sign
+            in again to access your tracks.
+          </p>
+
+          <div class="flex gap-3 w-full">
+            <button
+              id="btnCancelLogout"
+              type="button"
+              class="flex-1 py-4 px-6 rounded-2xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition-all"
+            >
+              Cancel
+            </button>
+
+            <button
+              id="btnConfirmLogout"
+              type="button"
+              class="flex-1 py-4 px-6 rounded-2xl bg-teal-500 text-white font-bold shadow-lg shadow-teal-500/30 hover:bg-teal-600 hover:-translate-y-0.5 transition-all"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="MT_report.js"></script>
+  </body>
+</html>
